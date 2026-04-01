@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spyon CCTV – Staff Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #161a22;
+    --surface2: #1e2330;
+    --border: #2a3040;
+    --accent: #f5a623;
+    --accent2: #e8522e;
+    --green: #22c55e;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --text: #f0f2f7;
+    --muted: #6b7a99;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(135deg, #161a22 0%, #1a1f2e 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 20px 14px;
+    display: flex; align-items: center; gap: 12px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-logo {
+    width: 38px; height: 38px; background: var(--accent);
+    border-radius: 10px; display: grid; place-items: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .header-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+  .header-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .header-date { margin-left: auto; text-align: right; font-size: 11px; color: var(--muted); }
+  .header-date strong { display: block; font-size: 13px; color: var(--text); font-weight: 500; }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky; top: 67px; z-index: 90;
+  }
+  .tab {
+    flex: 1; padding: 14px 8px; text-align: center;
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
+    color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all .2s; user-select: none;
+  }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-icon { display: block; font-size: 18px; margin-bottom: 3px; }
+
+  /* ── Sections ── */
+  .section { display: none; padding: 20px 16px; max-width: 500px; margin: 0 auto; }
+  .section.active { display: block; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    color: var(--muted); text-transform: uppercase; letter-spacing: .06em;
+    margin-bottom: 14px;
+  }
+
+  /* ── Select ── */
+  .select-wrap { position: relative; }
+  .select-wrap::after {
+    content: '▾'; position: absolute; right: 14px; top: 50%;
+    transform: translateY(-50%); color: var(--muted); pointer-events: none;
+  }
+  select {
+    width: 100%; padding: 13px 14px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 10px;
+    color: var(--text); font-size: 15px; font-family: 'DM Sans', sans-serif;
+    appearance: none; cursor: pointer;
+  }
+  select:focus { outline: 2px solid var(--accent); border-color: transparent; }
+
+  /* ── GPS Status ── */
+  .gps-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px; background: var(--surface2);
+    border-radius: 10px; margin-top: 12px;
+    border: 1px solid var(--border);
+  }
+  .gps-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--muted); flex-shrink: 0;
+    transition: background .3s;
+  }
+  .gps-dot.detecting { background: var(--accent); animation: pulse 1s infinite; }
+  .gps-dot.ok { background: var(--green); }
+  .gps-dot.error { background: var(--red); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .gps-text { font-size: 13px; color: var(--muted); }
+  .gps-dist { margin-left: auto; font-size: 12px; font-weight: 600;
+    font-family: 'Syne', sans-serif; }
+
+  /* ── Buttons ── */
+  .btn {
+    width: 100%; padding: 15px; border: none; border-radius: 11px;
+    font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: all .2s; margin-top: 12px;
+    letter-spacing: .02em;
+  }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-primary { background: var(--accent); color: #0d0f14; }
+  .btn-primary:not(:disabled):active { transform: scale(.97); }
+  .btn-exit { background: var(--accent2); color: #fff; }
+  .btn-exit:not(:disabled):active { transform: scale(.97); }
+  .btn-secondary {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-submit { background: var(--blue); color: #fff; }
+
+  /* ── Status badge ── */
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; font-family: 'Syne', sans-serif;
+  }
+  .badge-present { background: rgba(34,197,94,.15); color: var(--green); }
+  .badge-absent { background: rgba(239,68,68,.15); color: var(--red); }
+  .badge-late { background: rgba(245,166,35,.15); color: var(--accent); }
+
+  /* ── Today's status box ── */
+  .today-status {
+    padding: 16px; background: var(--surface2);
+    border-radius: 11px; margin-top: 12px; text-align: center;
+  }
+  .today-time { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; }
+  .today-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* ── Leave form ── */
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: block;
+    font-family: 'Syne', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing:.06em; }
+  input[type=date], input[type=text], textarea {
+    width: 100%; padding: 12px 14px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text);
+    font-size: 14px; font-family: 'DM Sans', sans-serif;
+  }
+  input[type=date]:focus, input[type=text]:focus, textarea:focus {
+    outline: 2px solid var(--blue); border-color: transparent;
+  }
+  textarea { resize: vertical; min-height: 80px; }
+  .radio-group { display: flex; gap: 10px; flex-wrap: wrap; }
+  .radio-pill {
+    padding: 8px 16px; border-radius: 20px;
+    border: 1px solid var(--border); background: var(--surface2);
+    font-size: 13px; cursor: pointer; transition: all .2s;
+  }
+  .radio-pill.selected { border-color: var(--blue); color: var(--blue);
+    background: rgba(59,130,246,.1); }
+
+  /* ── Admin panel ── */
+  .stat-row {
+    display: grid; grid-template-columns: repeat(3,1fr); gap: 10px;
+    margin-bottom: 14px;
+  }
+  .stat-box {
+    background: var(--surface2); border-radius: 11px;
+    padding: 14px 10px; text-align: center;
+    border: 1px solid var(--border);
+  }
+  .stat-num {
+    font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800;
+  }
+  .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .staff-filter {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;
+  }
+  .filter-chip {
+    padding: 6px 14px; border-radius: 20px; font-size: 12px;
+    border: 1px solid var(--border); background: var(--surface2);
+    cursor: pointer; transition: all .2s;
+    font-family: 'Syne', sans-serif; font-weight: 600;
+  }
+  .filter-chip.active { background: var(--accent); border-color: var(--accent); color: #0d0f14; }
+  .staff-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 14px; background: var(--surface2);
+    border-radius: 10px; margin-bottom: 8px;
+    border: 1px solid var(--border);
+  }
+  .staff-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--border); display: grid; place-items: center;
+    font-size: 15px; flex-shrink: 0;
+    font-family: 'Syne', sans-serif; font-weight: 700;
+  }
+  .staff-name { font-size: 14px; font-weight: 500; }
+  .staff-time { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .staff-badge { margin-left: auto; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 20px;
+    font-size: 14px; z-index: 999; min-width: 260px; text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,.5);
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: var(--green); color: var(--green); }
+  .toast.error { border-color: var(--red); color: var(--red); }
+  .toast.info { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.7); z-index: 200;
+    place-items: center;
+  }
+  .modal-overlay.open { display: grid; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 18px; padding: 28px 22px; width: 90%; max-width: 380px;
+    text-align: center;
+  }
+  .modal-icon { font-size: 44px; margin-bottom: 12px; }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+  .modal-sub { font-size: 14px; color: var(--muted); line-height: 1.5; }
+  .modal-time { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800;
+    color: var(--accent); margin: 14px 0; }
+
+  /* ── Admin lock ── */
+  .admin-lock {
+    text-align: center; padding: 40px 20px;
+  }
+  .lock-icon { font-size: 48px; margin-bottom: 16px; }
+  .pin-input {
+    display: flex; gap: 8px; justify-content: center; margin: 20px 0;
+  }
+  .pin-digit {
+    width: 52px; height: 58px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; font-size: 22px; font-weight: 700;
+    color: var(--text); text-align: center;
+    font-family: 'Syne', sans-serif;
+  }
+  .pin-digit:focus { outline: 2px solid var(--accent); border-color: transparent; }
+
+  .loading-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; padding: 30px; color: var(--muted); font-size: 14px;
+  }
+  .spinner {
+    width: 18px; height: 18px; border: 2px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state { text-align: center; padding: 30px; color: var(--muted); }
+  .empty-state .e-icon { font-size: 36px; margin-bottom: 10px; }
+
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  .info-note {
+    background: rgba(59,130,246,.08); border: 1px solid rgba(59,130,246,.2);
+    border-radius: 10px; padding: 11px 14px;
+    font-size: 12px; color: #93c5fd; line-height: 1.5;
+    margin-top: 12px;
+  }
+
+  .leave-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 11px; padding: 14px; margin-bottom: 10px;
+  }
+  .leave-card-header { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .leave-name { font-family:"Syne",sans-serif; font-size:14px; font-weight:700; }
+  .leave-type { font-size:11px; color:var(--muted); margin-top:2px; }
+  .leave-dates { font-size:12px; color:var(--muted); margin-bottom:6px; }
+  .leave-reason { font-size:13px; color:var(--text); margin-bottom:10px; line-height:1.4; }
+  .leave-actions { display:flex; gap:8px; }
+  .btn-approve {
+    flex:1; padding:9px; border:none; border-radius:8px;
+    background: rgba(34,197,94,.15); color:var(--green);
+    font-family:"Syne",sans-serif; font-size:13px; font-weight:700;
+    cursor:pointer; transition:all .2s; border:1px solid rgba(34,197,94,.3);
+  }
+  .btn-approve:hover { background:rgba(34,197,94,.25); }
+  .btn-reject {
+    flex:1; padding:9px; border:none; border-radius:8px;
+    background: rgba(239,68,68,.15); color:var(--red);
+    font-family:"Syne",sans-serif; font-size:13px; font-weight:700;
+    cursor:pointer; transition:all .2s; border:1px solid rgba(239,68,68,.3);
+  }
+  .btn-reject:hover { background:rgba(239,68,68,.25); }
+  .badge-pending { background:rgba(245,166,35,.15); color:var(--accent); }
+  .badge-approved { background:rgba(34,197,94,.15); color:var(--green); }
+  .badge-rejected { background:rgba(239,68,68,.15); color:var(--red); }
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<div class="header">
+  <div class="header-logo">📷</div>
+  <div>
+    <div class="header-title">Spyon CCTV</div>
+    <div class="header-sub">Staff Portal</div>
+  </div>
+  <div class="header-date">
+    <strong id="hDate">—</strong>
+    <span id="hTime">—</span>
+  </div>
+</div>
+
+<!-- ══ TABS ══ -->
+<div class="tabs">
+  <div class="tab active" data-tab="attend" onclick="switchTab('attend')">
+    <span class="tab-icon">🕐</span>Attendance
+  </div>
+  <div class="tab" data-tab="leave" onclick="switchTab('leave')">
+    <span class="tab-icon">📋</span>Leave
+  </div>
+  <div class="tab" data-tab="admin" onclick="switchTab('admin')">
+    <span class="tab-icon">🔒</span>Admin
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAB 1 — ATTENDANCE
+══════════════════════════════════════════ -->
+<div class="section active" id="tab-attend">
+
+  <!-- Name selector -->
+  <div class="card">
+    <div class="card-title">Who are you?</div>
+    <div class="select-wrap">
+      <select id="attName" onchange="onNameChange()">
+        <option value="">— Choose your name —</option>
+        <option>Akhtar</option>
+        <option>Rohit</option>
+        <option>Shahid</option>
+        <option>Aziz</option>
+        <option>Lucky</option>
+        <option>Sonu</option>
+        <option>Arjun</option>
+      </select>
+    </div>
+
+    <!-- GPS Status -->
+    <div class="gps-row" id="gpsRow">
+      <div class="gps-dot detecting" id="gpsDot"></div>
+      <span class="gps-text" id="gpsText">Detecting location…</span>
+      <span class="gps-dist" id="gpsDist"></span>
+    </div>
+  </div>
+
+  <!-- Today's status (shown after check-in) -->
+  <div class="card" id="statusCard" style="display:none">
+    <div class="card-title">Today's Status</div>
+    <div class="today-status">
+      <div id="statusBadge"></div>
+      <div class="today-time" id="checkinDisplay">—</div>
+      <div class="today-label" id="checkinLabel">Check-in time</div>
+      <div id="checkoutRow" style="display:none; margin-top:12px;">
+        <div class="today-time" id="checkoutDisplay" style="font-size:22px; color: var(--accent2);">—</div>
+        <div class="today-label">Check-out time</div>
+      </div>
+    </div>
+    <button class="btn btn-exit" id="btnExit" onclick="markExit()">🏠 Mark Exit</button>
+  </div>
+
+  <!-- Check-in button -->
+  <div class="card" id="checkinCard">
+    <button class="btn btn-primary" id="btnCheckin" onclick="markAttendance()" disabled>
+      ✅ Mark Present
+    </button>
+    <div class="info-note">📍 You must be within <strong>50 metres</strong> of the shop to mark attendance.</div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAB 2 — LEAVE APPLICATION
+══════════════════════════════════════════ -->
+<div class="section" id="tab-leave">
+
+  <div class="card">
+    <div class="card-title">Apply for Leave</div>
+
+    <div class="form-group">
+      <label class="form-label">Your Name</label>
+      <div class="select-wrap">
+        <select id="leaveName">
+          <option value="">— Select name —</option>
+          <option>Akhtar</option>
+          <option>Rohit</option>
+          <option>Shahid</option>
+          <option>Aziz</option>
+          <option>Lucky</option>
+          <option>Sonu</option>
+          <option>Arjun</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Leave Type</label>
+      <div class="radio-group" id="leaveTypeGroup">
+        <div class="radio-pill" onclick="selectLeaveType(this,'Sick Leave')">🤒 Sick</div>
+        <div class="radio-pill" onclick="selectLeaveType(this,'Personal Leave')">👤 Personal</div>
+        <div class="radio-pill" onclick="selectLeaveType(this,'Emergency Leave')">🚨 Emergency</div>
+        <div class="radio-pill" onclick="selectLeaveType(this,'Casual Leave')">☀️ Casual</div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div class="form-group">
+        <label class="form-label">From Date</label>
+        <input type="date" id="leaveFrom">
+      </div>
+      <div class="form-group">
+        <label class="form-label">To Date</label>
+        <input type="date" id="leaveTo">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Reason</label>
+      <textarea id="leaveReason" placeholder="Briefly describe your reason…"></textarea>
+    </div>
+
+    <button class="btn btn-submit" onclick="submitLeave()">📨 Submit Application</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">My Recent Applications</div>
+    <div id="leaveHistory">
+      <div class="empty-state">
+        <div class="e-icon">📭</div>
+        <div>Select your name above to load history</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAB 3 — ADMIN
+══════════════════════════════════════════ -->
+<div class="section" id="tab-admin">
+
+  <!-- Lock screen -->
+  <div id="adminLock">
+    <div class="admin-lock">
+      <div class="lock-icon">🔐</div>
+      <div style="font-family:'Syne',sans-serif; font-size:20px; font-weight:800; margin-bottom:8px;">Admin Access</div>
+      <div style="font-size:13px; color:var(--muted)">Enter your 4-digit PIN</div>
+      <div class="pin-input">
+        <input class="pin-digit" id="p1" type="password" maxlength="1" oninput="pinMove(this,'p2')" onkeydown="pinBack(event,this,'')">
+        <input class="pin-digit" id="p2" type="password" maxlength="1" oninput="pinMove(this,'p3')" onkeydown="pinBack(event,this,'p1')">
+        <input class="pin-digit" id="p3" type="password" maxlength="1" oninput="pinMove(this,'p4')" onkeydown="pinBack(event,this,'p2')">
+        <input class="pin-digit" id="p4" type="password" maxlength="1" oninput="pinMove(this,null)" onkeydown="pinBack(event,this,'p3')">
+      </div>
+      <button class="btn btn-primary" onclick="checkPin()" style="max-width:200px;margin:0 auto">Unlock</button>
+    </div>
+  </div>
+
+  <!-- Admin panel (after unlock) -->
+  <div id="adminPanel" style="display:none">
+    <!-- Stats -->
+    <div class="stat-row" id="adminStats">
+      <div class="stat-box">
+        <div class="stat-num" id="s-present" style="color:var(--green)">—</div>
+        <div class="stat-lbl">Present</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="s-late" style="color:var(--accent)">—</div>
+        <div class="stat-lbl">Late</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="s-absent" style="color:var(--red)">—</div>
+        <div class="stat-lbl">Absent</div>
+      </div>
+    </div>
+
+    <!-- Filter chips -->
+    <div class="staff-filter" id="adminFilter">
+      <div class="filter-chip active" onclick="filterAdmin('All',this)">All</div>
+      <div class="filter-chip" onclick="filterAdmin('Present',this)">Present</div>
+      <div class="filter-chip" onclick="filterAdmin('Late',this)">Late</div>
+      <div class="filter-chip" onclick="filterAdmin('Absent',this)">Absent</div>
+    </div>
+
+    <!-- Refresh + date display -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <span style="font-size:12px;color:var(--muted)" id="adminDateLabel">—</span>
+      <button onclick="loadAdminData()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:8px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">↻ Refresh</button>
+    </div>
+
+    <!-- Staff list -->
+    <div id="adminList">
+      <div class="loading-row"><div class="spinner"></div> Loading…</div>
+    </div>
+
+    <button class="btn btn-secondary" onclick="lockAdmin()" style="margin-top:8px">🔒 Lock Panel</button>
+
+    <!-- Leave Applications -->
+    <div class="divider" style="margin:20px 0"></div>
+    <div class="card-title" style="margin-bottom:12px">📋 Leave Applications</div>
+    <div class="staff-filter" id="leaveFilter">
+      <div class="filter-chip active" onclick="filterLeave("All",this)">All</div>
+      <div class="filter-chip" onclick="filterLeave("Pending",this)">Pending</div>
+      <div class="filter-chip" onclick="filterLeave("Approved",this)">Approved</div>
+      <div class="filter-chip" onclick="filterLeave("Rejected",this)">Rejected</div>
+    </div>
+    <div id="leaveList">
+      <div class="loading-row"><div class="spinner"></div> Loading…</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ SUCCESS MODAL ══ -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-icon" id="modalIcon">🎉</div>
+    <div class="modal-title" id="modalTitle">Done!</div>
+    <div class="modal-time" id="modalTime"></div>
+    <div class="modal-sub" id="modalSub"></div>
+    <button class="btn btn-primary" style="margin-top:20px" onclick="closeModal()">OK</button>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════
+// CONFIG — edit these to match your setup
+// ════════════════════════════════════════
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZdWOYE-jX4J-34sLhIZnkfLF7x4Whb7Dxx9tzSWkVP6OSVkphpflhdtoqGGgyXT6c/exec";
+const SHOP_LAT   = 28.657036;  // ← S.S. Systems shop latitude
+const SHOP_LNG   = 77.235817;  // ← S.S. Systems shop longitude
+const FENCE_M    = 50;         // ← geo-fence radius in metres
+const LATE_HOUR  = 10;         // ← hour after which check-in is "Late" (24h, e.g. 10 = 10:00 AM)
+const LATE_MIN   = 15;         // ← minute (e.g. 10:15 AM)
+const ADMIN_PIN  = "1234";     // ← change to your pin
+const ASHMIT_WA  = "919871639723"; // Ashmit WhatsApp number
+const STAFF_WA   = {
+  "Akhtar": "919711060636",
+  "Rohit":  "917065818114",
+  "Shahid": "919582605112",
+  "Aziz":   "918447865709",
+  "Lucky":  "919555963453",
+  "Sonu":   "918810315793",
+  "Arjun":  "919315837810"
+};
+
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+let userLat = null, userLng = null;
+let gpsOk = false;
+let checkedIn = false;
+let checkedOut = false;
+let selectedLeaveType = '';
+let adminUnlocked = false;
+const allStaff = ['Akhtar','Rohit','Shahid','Aziz','Lucky','Sonu','Arjun'];
+const avatarColors = ['#f5a623','#e8522e','#3b82f6','#22c55e','#a855f7','#ec4899','#14b8a6'];
+
+// ════════════════════════════════════════
+// HEADER CLOCK
+// ════════════════════════════════════════
+function updateClock(){
+  const now = new Date();
+  document.getElementById('hDate').textContent = now.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+  document.getElementById('hTime').textContent = now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+updateClock(); setInterval(updateClock, 1000);
+
+// ════════════════════════════════════════
+// TABS
+// ════════════════════════════════════════
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  // Find the tab button by data attribute and activate it
+  document.querySelectorAll('.tab').forEach(t=>{
+    if(t.getAttribute('data-tab')===id) t.classList.add('active');
+  });
+  document.getElementById('tab-'+id).classList.add('active');
+  if(id==='admin' && adminUnlocked) loadAdminData();
+}
+
+// ════════════════════════════════════════
+// GPS
+// ════════════════════════════════════════
+function haversine(lat1,lng1,lat2,lng2){
+  const R=6371000, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function startGPS(){
+  if(!navigator.geolocation){
+    setGPS(false,'GPS not supported on this device');
+    return;
+  }
+
+  // Show timeout error if no GPS fix within 12 seconds
+  const gpsTimeout = setTimeout(()=>{
+    if(!userLat){
+      setGPS(false,'Could not get location — check GPS/permission');
+    }
+  }, 12000);
+
+  navigator.geolocation.watchPosition(pos=>{
+    clearTimeout(gpsTimeout);
+    userLat = pos.coords.latitude;
+    userLng = pos.coords.longitude;
+    const dist = Math.round(haversine(userLat,userLng,SHOP_LAT,SHOP_LNG));
+    const ok = dist <= FENCE_M;
+    gpsOk = ok;
+    setGPS(ok, ok ? `Within range (${dist}m)` : `Too far — move closer`, dist);
+    updateButtons();
+  }, err=>{
+    clearTimeout(gpsTimeout);
+    const msg = err.code === 1 ? 'Location permission denied — allow in browser settings'
+              : err.code === 2 ? 'Location unavailable — check GPS signal'
+              : 'Location timed out — try moving outdoors';
+    setGPS(false, msg);
+    gpsOk = false;
+    updateButtons();
+  },{enableHighAccuracy:true, maximumAge:5000, timeout:10000});
+}
+
+function setGPS(ok, msg, dist){
+  const dot = document.getElementById('gpsDot');
+  const txt = document.getElementById('gpsText');
+  const d = document.getElementById('gpsDist');
+  dot.className = 'gps-dot ' + (dist===undefined ? 'detecting' : ok ? 'ok' : 'error');
+  txt.textContent = msg;
+  if(dist !== undefined){
+    d.textContent = dist + 'm';
+    d.style.color = ok ? 'var(--green)' : 'var(--red)';
+  }
+}
+
+startGPS();
+
+// ════════════════════════════════════════
+// ATTENDANCE — CHECK IN
+// ════════════════════════════════════════
+function onNameChange(){
+  updateButtons();
+  checkTodayStatus();
+}
+
+function updateButtons(){
+  const name = document.getElementById('attName').value;
+  const canCheckin = name && gpsOk && !checkedIn;
+  document.getElementById('btnCheckin').disabled = !canCheckin;
+}
+
+function checkTodayStatus(){
+  const name = document.getElementById('attName').value;
+  if(!name) return;
+  // Check localStorage for today's session
+  const key = `att_${name}_${todayKey()}`;
+  const saved = localStorage.getItem(key);
+  if(saved){
+    const data = JSON.parse(saved);
+    checkedIn = true;
+    checkedOut = !!data.checkOut;
+    showStatusCard(data);
+  } else {
+    checkedIn = false;
+    checkedOut = false;
+    document.getElementById('statusCard').style.display='none';
+    document.getElementById('checkinCard').style.display='block';
+  }
+}
+
+function todayKey(){
+  return new Date().toISOString().slice(0,10);
+}
+
+function timeNow(){
+  return new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+
+async function markAttendance(){
+  const name = document.getElementById('attName').value;
+  if(!name){ showToast('Please select your name','error'); return; }
+  if(!gpsOk){ showToast('You are outside the 50m range','error'); return; }
+
+  const btn = document.getElementById('btnCheckin');
+  btn.disabled = true; btn.textContent = '⏳ Marking…';
+
+  const now = new Date();
+  const isLate = (now.getHours() > LATE_HOUR) || (now.getHours() === LATE_HOUR && now.getMinutes() >= LATE_MIN);
+  const status = isLate ? 'Late' : 'Present';
+  const time = timeNow();
+
+  const payload = {
+    action: 'checkin',
+    name, time,
+    status,
+    date: todayKey(),
+    lat: userLat.toFixed(6),
+    lng: userLng.toFixed(6)
+  };
+
+  try {
+    await postToSheet(payload);
+    const data = { checkIn: time, status, checkOut: null };
+    localStorage.setItem(`att_${name}_${todayKey()}`, JSON.stringify(data));
+    checkedIn = true;
+    showStatusCard(data);
+    openModal('✅','Attendance Marked!', time, `${name} — ${status}`);
+  } catch(e){
+    showToast('Failed to submit. Check connection.','error');
+    btn.disabled = false; btn.textContent = '✅ Mark Present';
+  }
+}
+
+function showStatusCard(data){
+  document.getElementById('checkinCard').style.display = 'none';
+  document.getElementById('statusCard').style.display = 'block';
+  document.getElementById('checkinDisplay').textContent = data.checkIn;
+  document.getElementById('checkinLabel').textContent = 'Check-in time';
+
+  const badge = document.getElementById('statusBadge');
+  badge.innerHTML = `<span class="status-badge badge-${data.status.toLowerCase()}">${data.status === 'Present' ? '🟢' : '🟡'} ${data.status}</span>`;
+
+  if(data.checkOut){
+    document.getElementById('checkoutDisplay').textContent = data.checkOut;
+    document.getElementById('checkoutRow').style.display = 'block';
+    document.getElementById('btnExit').style.display = 'none';
+  } else {
+    document.getElementById('checkoutRow').style.display = 'none';
+    document.getElementById('btnExit').style.display = 'block';
+  }
+}
+
+// ════════════════════════════════════════
+// ATTENDANCE — CHECK OUT
+// ════════════════════════════════════════
+async function markExit(){
+  const name = document.getElementById('attName').value;
+  if(!name) return;
+  // No GPS check for exit — staff already proved presence at check-in
+
+  const btn = document.getElementById('btnExit');
+  btn.disabled = true; btn.textContent = '⏳ Marking…';
+
+  const time = timeNow();
+  const today = todayKey();
+  const payload = { action: 'checkout', name, time, date: today };
+
+  try {
+    await postToSheet(payload);
+    const key = `att_${name}_${today}`;
+    const raw = localStorage.getItem(key);
+    const saved = raw ? JSON.parse(raw) : { checkIn: '—', status: 'Present' };
+    saved.checkOut = time;
+    localStorage.setItem(key, JSON.stringify(saved));
+    checkedOut = true;
+    showStatusCard(saved);
+    openModal('🏠','Exit Marked!', time, `${name} — Have a good evening!`);
+  } catch(e){
+    console.error('Exit error:', e);
+    showToast('Failed to submit: ' + e.message,'error');
+    btn.disabled = false; btn.textContent = '🏠 Mark Exit';
+  }
+}
+
+// ════════════════════════════════════════
+// LEAVE APPLICATION
+// ════════════════════════════════════════
+function selectLeaveType(el, type){
+  document.querySelectorAll('#leaveTypeGroup .radio-pill').forEach(p=>p.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedLeaveType = type;
+}
+
+async function submitLeave(){
+  const name = document.getElementById('leaveName').value;
+  const from = document.getElementById('leaveFrom').value;
+  const to   = document.getElementById('leaveTo').value;
+  const reason = document.getElementById('leaveReason').value.trim();
+
+  if(!name){ showToast('Please select your name','error'); return; }
+  if(!selectedLeaveType){ showToast('Please select leave type','error'); return; }
+  if(!from || !to){ showToast('Please fill both dates','error'); return; }
+  if(from > to){ showToast('From date cannot be after To date','error'); return; }
+  if(!reason){ showToast('Please write a reason','error'); return; }
+
+  const btn = document.querySelector('#tab-leave .btn-submit');
+  btn.disabled = true; btn.textContent = '⏳ Submitting…';
+
+  const days = Math.round((new Date(to)-new Date(from))/(86400000))+1;
+  const payload = {
+    action: 'leave',
+    name,
+    leaveType: selectedLeaveType,
+    fromDate: from,
+    toDate: to,
+    days,
+    reason,
+    appliedAt: new Date().toLocaleString('en-IN')
+  };
+
+  try {
+    await postToSheet(payload);
+    openModal('📋','Application Submitted!','', `${days} day(s) of ${selectedLeaveType}`);
+    // Notify Ashmit on WhatsApp
+    notifyAshmitNewLeave(name, selectedLeaveType, from, to, days, reason);
+    // Reset form
+    document.getElementById('leaveName').value='';
+    document.getElementById('leaveFrom').value='';
+    document.getElementById('leaveTo').value='';
+    document.getElementById('leaveReason').value='';
+    document.querySelectorAll('#leaveTypeGroup .radio-pill').forEach(p=>p.classList.remove('selected'));
+    selectedLeaveType='';
+  } catch(e){
+    showToast('Submission failed. Check connection.','error');
+  } finally {
+    btn.disabled = false; btn.textContent = '📨 Submit Application';
+  }
+}
+
+// ════════════════════════════════════════
+// ADMIN
+// ════════════════════════════════════════
+function pinMove(el, nextId){
+  if(el.value && nextId) document.getElementById(nextId).focus();
+}
+function pinBack(e, el, prevId){
+  if(e.key==='Backspace' && !el.value && prevId) document.getElementById(prevId).focus();
+}
+
+function checkPin(){
+  const pin = ['p1','p2','p3','p4'].map(id=>document.getElementById(id).value).join('');
+  if(pin === ADMIN_PIN){
+    adminUnlocked = true;
+    document.getElementById('adminLock').style.display='none';
+    document.getElementById('adminPanel').style.display='block';
+    loadAdminData();
+  } else {
+    showToast('Wrong PIN','error');
+    ['p1','p2','p3','p4'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('p1').focus();
+  }
+}
+
+function lockAdmin(){
+  adminUnlocked = false;
+  clearTimeout(adminRefreshTimer);
+  document.getElementById('adminPanel').style.display='none';
+  document.getElementById('adminLock').style.display='block';
+  ['p1','p2','p3','p4'].forEach(id=>document.getElementById(id).value='');
+}
+
+let adminData = [];
+let adminFilter_val = 'All';
+
+let adminRefreshTimer = null;
+
+async function loadAdminData(){
+  // Update date label
+  const lbl = document.getElementById('adminDateLabel');
+  if(lbl) lbl.textContent = 'Today: ' + new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'}) + ' · Last updated: ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+
+  document.getElementById('adminList').innerHTML = '<div class="loading-row"><div class="spinner"></div> Loading…</div>';
+  document.getElementById('leaveList').innerHTML = '<div class="loading-row"><div class="spinner"></div> Loading…</div>';
+
+  try {
+    const url = SCRIPT_URL + '?action=getToday&date='+ todayKey();
+    const res = await fetch(url);
+    const json = await res.json();
+    adminData = json.data || [];
+    renderAdmin();
+  } catch(e){
+    document.getElementById('adminList').innerHTML = '<div class="empty-state"><div class="e-icon">⚠️</div>Could not load — check connection</div>';
+  }
+  loadLeaveApplications();
+
+  // Auto-refresh every 60 seconds while admin panel is open
+  clearTimeout(adminRefreshTimer);
+  adminRefreshTimer = setTimeout(()=>{
+    if(adminUnlocked) loadAdminData();
+  }, 60000);
+}
+
+function renderAdmin(){
+  // Enrich with absent
+  const presentNames = adminData.map(r=>r.name);
+  const full = [...adminData];
+  allStaff.forEach(s=>{ if(!presentNames.includes(s)) full.push({name:s,status:'Absent',checkIn:'—',checkOut:'—'}); });
+
+  const filtered = adminFilter_val==='All' ? full : full.filter(r=>r.status===adminFilter_val);
+
+  // Stats
+  document.getElementById('s-present').textContent = full.filter(r=>r.status==='Present'||r.status==='Late').length;
+  document.getElementById('s-late').textContent = full.filter(r=>r.status==='Late').length;
+  document.getElementById('s-absent').textContent = full.filter(r=>r.status==='Absent').length;
+
+  if(!filtered.length){
+    document.getElementById('adminList').innerHTML='<div class="empty-state"><div class="e-icon">📭</div>No records</div>';
+    return;
+  }
+
+  document.getElementById('adminList').innerHTML = filtered.map((r,i)=>{
+    const idx = allStaff.indexOf(r.name);
+    const col = avatarColors[idx] || '#888';
+    const badgeCls = r.status==='Present'?'badge-present':r.status==='Late'?'badge-late':'badge-absent';
+    const icon = r.status==='Present'?'🟢':r.status==='Late'?'🟡':'🔴';
+    const exitTxt = r.checkOut && r.checkOut !== '—' ? ` → ${r.checkOut}` : '';
+    return `
+    <div class="staff-row">
+      <div class="staff-avatar" style="background:${col}22;color:${col}">${r.name[0]}</div>
+      <div>
+        <div class="staff-name">${r.name}</div>
+        <div class="staff-time">${r.checkIn}${exitTxt}</div>
+      </div>
+      <div class="staff-badge"><span class="status-badge ${badgeCls}">${icon} ${r.status}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function filterAdmin(val, el){
+  adminFilter_val = val;
+  document.querySelectorAll('#adminFilter .filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderAdmin();
+}
+
+// ════════════════════════════════════════
+
+// ════════════════════════════════════════
+// LEAVE APPROVAL (ADMIN)
+// ════════════════════════════════════════
+let leaveData = [];
+let leaveFilter_val = 'All';
+
+async function loadLeaveApplications(){
+  try {
+    const url = SCRIPT_URL + '?action=getLeaves';
+    const res = await fetch(url);
+    const json = await res.json();
+    leaveData = json.data || [];
+    renderLeaves();
+  } catch(e){
+    document.getElementById('leaveList').innerHTML = '<div class="empty-state"><div class="e-icon">⚠️</div>Could not load leaves</div>';
+  }
+}
+
+function renderLeaves(){
+  const filtered = leaveFilter_val==='All' ? leaveData : leaveData.filter(r=>r.status===leaveFilter_val);
+  if(!filtered.length){
+    document.getElementById('leaveList').innerHTML='<div class="empty-state"><div class="e-icon">📭</div>No applications found</div>';
+    return;
+  }
+  document.getElementById('leaveList').innerHTML = filtered.map((r,i)=>{
+    const isPending = r.status==='Pending';
+    const badgeCls = r.status==='Approved'?'badge-approved':r.status==='Rejected'?'badge-rejected':'badge-pending';
+    const icon = r.status==='Approved'?'✅':r.status==='Rejected'?'❌':'🕐';
+    const idx = allStaff.indexOf(r.name);
+    const col = avatarColors[idx] || '#888';
+    return `
+    <div class="leave-card">
+      <div class="leave-card-header">
+        <div class="staff-avatar" style="background:${col}22;color:${col};width:32px;height:32px;font-size:13px">${r.name[0]}</div>
+        <div>
+          <div class="leave-name">${r.name}</div>
+          <div class="leave-type">${r.leaveType}</div>
+        </div>
+        <span class="status-badge ${badgeCls}" style="margin-left:auto">${icon} ${r.status}</span>
+      </div>
+      <div class="leave-dates">📅 ${r.fromDate} → ${r.toDate} &nbsp;|&nbsp; ${r.days} day(s)</div>
+      <div class="leave-reason">${r.reason}</div>
+      ${isPending ? `
+      <div class="leave-actions">
+        <button class="btn-approve" onclick="updateLeave(${r.rowNum},'Approved',this,'${r.name}','${r.leaveType}','${r.fromDate}','${r.toDate}',${r.days})">✅ Approve</button>
+        <button class="btn-reject" onclick="updateLeave(${r.rowNum},'Rejected',this,'${r.name}','${r.leaveType}','${r.fromDate}','${r.toDate}',${r.days})">❌ Reject</button>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function filterLeave(val, el){
+  leaveFilter_val = val;
+  document.querySelectorAll('#leaveFilter .filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderLeaves();
+}
+
+async function updateLeave(rowNum, newStatus, btn, name, leaveType, fromDate, toDate, days){
+  btn.disabled = true;
+  btn.textContent = '⏳';
+  try {
+    await postToSheet({ action: 'updateLeave', rowNum, newStatus });
+    await loadLeaveApplications();
+    // Notify staff via WhatsApp
+    notifyStaffDecision(name, newStatus, leaveType, fromDate, toDate, days || 1);
+    showToast(newStatus==='Approved' ? '✅ Leave Approved — WhatsApp sent!':'❌ Leave Rejected — WhatsApp sent!', newStatus==='Approved'?'success':'error');
+  } catch(e){
+    showToast('Failed to update','error');
+    btn.disabled=false;
+    btn.textContent = newStatus==='Approved'?'✅ Approve':'❌ Reject';
+  }
+}
+// SHEET API
+
+// ════════════════════════════════════════
+// WHATSAPP NOTIFICATIONS
+// ════════════════════════════════════════
+function fmtDate(d) {
+  if (!d) return d;
+  const [y,m,day] = d.split("-");
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${day} ${months[+m-1]} ${y}`;
+}
+
+function sendWA(number, message) {
+  const a = document.createElement("a");
+  a.href = `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+  a.target = "_blank"; a.rel = "noopener";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// Called when staff submits leave — notifies Ashmit
+function notifyAshmitNewLeave(name, leaveType, fromDate, toDate, days, reason) {
+  const msg = `🔔 *New Leave Request*
+
+👤 *${name}*
+📅 ${fmtDate(fromDate)} → ${fmtDate(toDate)} (${days} day${days>1?"s":""})
+🏷️ ${leaveType}
+📝 ${reason}
+
+_Open the Staff Portal → Admin → Leave Applications to approve or reject._`;
+  sendWA(ASHMIT_WA, msg);
+}
+
+// Called when Ashmit approves/rejects — notifies staff
+function notifyStaffDecision(name, decision, leaveType, fromDate, toDate, days) {
+  const phone = STAFF_WA[name];
+  if (!phone) return;
+  const emoji = decision === "Approved" ? "✅" : "❌";
+  const msg = decision === "Approved"
+    ? `${emoji} *Leave Approved!*
+
+Hi ${name}, your leave has been *approved* by Ashmit.
+
+📅 ${fmtDate(fromDate)} → ${fmtDate(toDate)} (${days} day${days>1?"s":""})
+🏷️ ${leaveType}
+
+Enjoy your time off! Make sure work is covered before you leave. 🙏`
+    : `${emoji} *Leave Request Update*
+
+Hi ${name}, your leave request has been *rejected* by Ashmit.
+
+📅 ${fmtDate(fromDate)} → ${fmtDate(toDate)}
+🏷️ ${leaveType}
+
+Please speak with Ashmit directly for more details.`;
+  sendWA(phone, msg);
+}
+// ════════════════════════════════════════
+async function postToSheet(payload){
+  if(SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE"){
+    console.log('Sheet payload:', payload);
+    return { success: true }; // mock for testing
+  }
+  const res = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+  const json = await res.json();
+  if(!json.success) throw new Error(json.error || 'Unknown error');
+  return json;
+}
+
+// ════════════════════════════════════════
+// UI HELPERS
+// ════════════════════════════════════════
+function openModal(icon, title, time, sub){
+  document.getElementById('modalIcon').textContent = icon;
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalTime').textContent = time;
+  document.getElementById('modalSub').textContent = sub;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+
+let toastTimer;
+function showToast(msg, type='info'){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.className='toast', 3000);
+}
+</script>
+</body>
+</html>
